@@ -759,7 +759,7 @@ export default function App() {
             </div>
             <div style={{ fontSize: 12, color: C.dim }}>{t.footerTech}</div>
           </div>
-          <a href="https://primedev-studios.netlify.app/#contact" target="_blank" rel="noopener noreferrer" style={{
+          <a href="https://www.prime-dev-studios.com/#contact" target="_blank" rel="noopener noreferrer" style={{
             padding: "10px 24px", borderRadius: 10,
             background: `linear-gradient(135deg, ${C.accent}, ${C.blue})`,
             fontSize: 13, fontWeight: 700, color: C.bg, cursor: "pointer",
