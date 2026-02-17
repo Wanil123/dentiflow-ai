@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 const C = {
   bg: "#030712",
@@ -16,34 +16,201 @@ const C = {
   dim: "#4a5568",
 };
 
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
+function detectLang() {
+  const n = navigator.language || navigator.userLanguage || "fr";
+  return n.startsWith("fr") ? "fr" : "en";
+}
+
+const T = {
+  fr: {
+    subtitle: "Clinique Dentaire Sainte-Catherine — Automatisation complète",
+    automationsActive: "6 automatisations actives",
+    tabPipeline: "Pipeline patients",
+    tabAutomations: "Automatisations",
+    tabChatbot: "Chatbot en action",
+    kpiPatients: "PATIENTS CE MOIS",
+    kpiPatientsVal: 156,
+    kpiPatientsSub: "+23% vs jan.",
+    kpiBooked: "RDV BOOKÉS PAR L'IA",
+    kpiBookedVal: 89,
+    kpiBookedSub: "57% du total",
+    kpiRevenue: "REVENUS GÉNÉRÉS",
+    kpiRevenueSub: "Via automatisations",
+    kpiNoshow: "TAUX NO-SHOW",
+    kpiNoshowSub: "Était 18% avant IA",
+    kpiReviews: "AVIS GOOGLE",
+    kpiReviewsSub: "127 avis · +34 ce mois",
+    pipelineTitle: "Pipeline patients — Qualifiés par IA",
+    pipelineSub: "Scoring automatique basé sur le besoin, l'urgence et la valeur potentielle",
+    booked: "Bookés",
+    nurturing: "Nurturing",
+    lost: "Perdus",
+    colPatient: "Patient",
+    colNeed: "Besoin",
+    colValue: "Valeur",
+    colScore: "Score",
+    colSource: "Source",
+    colFollow: "Suivi IA",
+    colTime: "Heure",
+    // Automations
+    trigger: "Déclencheur",
+    active: "Actif",
+    msgSent: "Messages envoyés",
+    responseRate: "Taux de réponse",
+    roiTimeSaved: "Temps économisé / mois",
+    roiTimeSub: "Réceptionniste + suivi",
+    roiNoshow: "No-shows évités",
+    roiNoshowSub: "Valeur: ~6,900$",
+    roiReactivated: "Patients réactivés",
+    roiReactivatedSub: "Inactifs 6+ mois",
+    roiMonthly: "ROI mensuel",
+    roiMonthlySub: "Retour sur investissement",
+    // Chatbot
+    chatTitle: "Chatbot IA — Clinique Ste-Catherine",
+    chatOnline: "● En ligne · Répond en ~2 secondes",
+    chatIntro: "Widget chatbot intégré sur le site web de la clinique",
+    ficheTitle: "📋 Fiche patient auto-créée",
+    actionsTitle: "⚡ Actions automatiques",
+    // Footer
+    footerBy: "Développé par",
+    footerTech: "Automatisation IA sur mesure · n8n · OpenAI · Twilio · CRM Integration",
+    footerCta: "Demander une démo →",
+    // Chat messages
+    chatMessages: [
+      { role: "patient", text: "Bonjour, est-ce que vous avez des disponibilités cette semaine pour un nettoyage?", time: "10:28" },
+      { role: "ai", text: "Bonjour! 😊 Absolument. Nous avons des places disponibles mercredi à 10h ou 14h, et jeudi à 9h ou 15h30. Quelle plage vous conviendrait le mieux?", time: "10:28" },
+      { role: "patient", text: "Jeudi 9h ça serait parfait!", time: "10:29" },
+      { role: "ai", text: "Excellent! Je vous réserve le jeudi 20 février à 9h avec Dre Tremblay. Est-ce votre première visite chez nous?", time: "10:29" },
+      { role: "patient", text: "Oui c'est ma première fois.", time: "10:29" },
+      { role: "ai", text: "Bienvenue! 🎉 Pour accélérer votre enregistrement, je vous envoie par email un formulaire pré-visite à remplir. Puis-je avoir votre nom complet et votre courriel?", time: "10:30" },
+      { role: "patient", text: "Émilie Fortin, emilie.fortin@gmail.com", time: "10:30" },
+      { role: "ai", text: "Merci Émilie! Votre RDV est confirmé ✅\n\n📅 Jeudi 20 fév. à 9h00\n👩‍⚕️ Dre Tremblay\n📍 1250 rue Sherbrooke, Montréal\n\nVous recevrez un SMS de rappel 24h avant. À bientôt!", time: "10:30" },
+    ],
+    ficheFields: [
+      ["Nom", "Émilie Fortin"],
+      ["Email", "emilie.fortin@gmail.com"],
+      ["Type", "Nouvelle patiente"],
+      ["Besoin", "Examen + nettoyage"],
+      ["RDV", "Jeudi 20 fév. 9h00"],
+      ["Dentiste", "Dre Tremblay"],
+      ["Formulaire", "Pré-visite envoyé ✅"],
+    ],
+    actions: [
+      { icon: "✅", text: "RDV créé", sub: "Système de gestion clinique" },
+      { icon: "📧", text: "Formulaire pré-visite envoyé", sub: "Email automatique" },
+      { icon: "📱", text: "SMS rappel programmé", sub: "24h avant le RDV" },
+      { icon: "📊", text: "Fiche patient créée", sub: "CRM mis à jour" },
+    ],
+  },
+  en: {
+    subtitle: "Sainte-Catherine Dental Clinic — Full Automation",
+    automationsActive: "6 active automations",
+    tabPipeline: "Patient pipeline",
+    tabAutomations: "Automations",
+    tabChatbot: "Chatbot in action",
+    kpiPatients: "PATIENTS THIS MONTH",
+    kpiPatientsVal: 156,
+    kpiPatientsSub: "+23% vs Jan.",
+    kpiBooked: "AI-BOOKED APPTS",
+    kpiBookedVal: 89,
+    kpiBookedSub: "57% of total",
+    kpiRevenue: "REVENUE GENERATED",
+    kpiRevenueSub: "Via automations",
+    kpiNoshow: "NO-SHOW RATE",
+    kpiNoshowSub: "Was 18% before AI",
+    kpiReviews: "GOOGLE REVIEWS",
+    kpiReviewsSub: "127 reviews · +34 this month",
+    pipelineTitle: "Patient pipeline — AI-qualified",
+    pipelineSub: "Automatic scoring based on need, urgency and potential value",
+    booked: "Booked",
+    nurturing: "Nurturing",
+    lost: "Lost",
+    colPatient: "Patient",
+    colNeed: "Need",
+    colValue: "Value",
+    colScore: "Score",
+    colSource: "Source",
+    colFollow: "AI Follow-up",
+    colTime: "Time",
+    // Automations
+    trigger: "Trigger",
+    active: "Active",
+    msgSent: "Messages sent",
+    responseRate: "Response rate",
+    roiTimeSaved: "Time saved / month",
+    roiTimeSub: "Receptionist + follow-up",
+    roiNoshow: "No-shows prevented",
+    roiNoshowSub: "Value: ~$6,900",
+    roiReactivated: "Patients reactivated",
+    roiReactivatedSub: "Inactive 6+ months",
+    roiMonthly: "Monthly ROI",
+    roiMonthlySub: "Return on investment",
+    // Chatbot
+    chatTitle: "AI Chatbot — Ste-Catherine Clinic",
+    chatOnline: "● Online · Responds in ~2 seconds",
+    chatIntro: "Chatbot widget embedded on the clinic's website",
+    ficheTitle: "📋 Auto-created patient card",
+    actionsTitle: "⚡ Automatic actions",
+    // Footer
+    footerBy: "Built by",
+    footerTech: "Custom AI automation · n8n · OpenAI · Twilio · CRM Integration",
+    footerCta: "Request a demo →",
+    // Chat messages
+    chatMessages: [
+      { role: "patient", text: "Hi, do you have any availability this week for a cleaning?", time: "10:28" },
+      { role: "ai", text: "Hello! 😊 Absolutely. We have spots available Wednesday at 10am or 2pm, and Thursday at 9am or 3:30pm. Which time works best for you?", time: "10:28" },
+      { role: "patient", text: "Thursday 9am would be perfect!", time: "10:29" },
+      { role: "ai", text: "Excellent! I'm booking you for Thursday, February 20th at 9am with Dr. Tremblay. Is this your first visit with us?", time: "10:29" },
+      { role: "patient", text: "Yes, it's my first time.", time: "10:29" },
+      { role: "ai", text: "Welcome! 🎉 To speed up your registration, I'll send you a pre-visit form by email. May I have your full name and email address?", time: "10:30" },
+      { role: "patient", text: "Émilie Fortin, emilie.fortin@gmail.com", time: "10:30" },
+      { role: "ai", text: "Thank you Émilie! Your appointment is confirmed ✅\n\n📅 Thursday Feb 20 at 9:00am\n👩‍⚕️ Dr. Tremblay\n📍 1250 Sherbrooke St, Montreal\n\nYou'll receive an SMS reminder 24h before. See you soon!", time: "10:30" },
+    ],
+    ficheFields: [
+      ["Name", "Émilie Fortin"],
+      ["Email", "emilie.fortin@gmail.com"],
+      ["Type", "New patient"],
+      ["Need", "Exam + cleaning"],
+      ["Appt", "Thursday Feb 20, 9am"],
+      ["Dentist", "Dr. Tremblay"],
+      ["Form", "Pre-visit sent ✅"],
+    ],
+    actions: [
+      { icon: "✅", text: "Appt created", sub: "Clinic management system" },
+      { icon: "📧", text: "Pre-visit form sent", sub: "Automatic email" },
+      { icon: "📱", text: "SMS reminder scheduled", sub: "24h before appt" },
+      { icon: "📊", text: "Patient card created", sub: "CRM updated" },
+    ],
+  },
+};
+
 const patients = [
-  { id: 1, name: "Caroline Bergeron", need: "Blanchiment", value: "850$", status: "booked", score: 94, source: "Google", follow: "Confirmé", time: "Auj. 15:20" },
-  { id: 2, name: "Maxime Pelletier", need: "Implant dentaire", value: "4,200$", status: "nurturing", score: 87, source: "Facebook Ad", follow: "Email #2 envoyé", time: "Auj. 11:45" },
-  { id: 3, name: "Émilie Fortin", need: "Examen + nettoyage", value: "320$", status: "booked", score: 91, source: "Site web", follow: "RDV demain 9h", time: "Auj. 10:30" },
-  { id: 4, name: "David Chen", need: "Urgence — douleur", value: "600$", status: "booked", score: 98, source: "Appel direct", follow: "Vu aujourd'hui", time: "Auj. 08:15" },
-  { id: 5, name: "Stéphanie Morin", need: "Invisalign", value: "6,500$", status: "nurturing", score: 72, source: "Instagram", follow: "Rappel vendredi", time: "Hier 16:00" },
-  { id: 6, name: "Philippe Bouchard", need: "Couronne", value: "1,400$", status: "lost", score: 45, source: "Référence", follow: "Pas de réponse ×3", time: "Hier 09:20" },
-  { id: 7, name: "Nathalie Gagnon", need: "Prothèse partielle", value: "2,800$", status: "booked", score: 88, source: "Google", follow: "Consultation lundi", time: "13 fév" },
+  { id: 1, name: "Caroline Bergeron", need: { fr: "Blanchiment", en: "Whitening" }, value: "850$", status: "booked", score: 94, source: "Google", follow: { fr: "Confirmé", en: "Confirmed" }, time: { fr: "Auj. 15:20", en: "Today 15:20" } },
+  { id: 2, name: "Maxime Pelletier", need: { fr: "Implant dentaire", en: "Dental implant" }, value: "4,200$", status: "nurturing", score: 87, source: "Facebook Ad", follow: { fr: "Email #2 envoyé", en: "Email #2 sent" }, time: { fr: "Auj. 11:45", en: "Today 11:45" } },
+  { id: 3, name: "Émilie Fortin", need: { fr: "Examen + nettoyage", en: "Exam + cleaning" }, value: "320$", status: "booked", score: 91, source: { fr: "Site web", en: "Website" }, follow: { fr: "RDV demain 9h", en: "Appt tomorrow 9am" }, time: { fr: "Auj. 10:30", en: "Today 10:30" } },
+  { id: 4, name: "David Chen", need: { fr: "Urgence — douleur", en: "Emergency — pain" }, value: "600$", status: "booked", score: 98, source: { fr: "Appel direct", en: "Direct call" }, follow: { fr: "Vu aujourd'hui", en: "Seen today" }, time: { fr: "Auj. 08:15", en: "Today 08:15" } },
+  { id: 5, name: "Stéphanie Morin", need: "Invisalign", value: "6,500$", status: "nurturing", score: 72, source: "Instagram", follow: { fr: "Rappel vendredi", en: "Callback Friday" }, time: { fr: "Hier 16:00", en: "Yest. 16:00" } },
+  { id: 6, name: "Philippe Bouchard", need: { fr: "Couronne", en: "Crown" }, value: "1,400$", status: "lost", score: 45, source: { fr: "Référence", en: "Referral" }, follow: { fr: "Pas de réponse ×3", en: "No response ×3" }, time: { fr: "Hier 09:20", en: "Yest. 09:20" } },
+  { id: 7, name: "Nathalie Gagnon", need: { fr: "Prothèse partielle", en: "Partial denture" }, value: "2,800$", status: "booked", score: 88, source: "Google", follow: { fr: "Consultation lundi", en: "Consult Monday" }, time: { fr: "13 fév", en: "Feb 13" } },
 ];
 
 const automations = [
-  { name: "Confirmation RDV (SMS + Email)", type: "Pré-visite", triggers: "24h avant", status: "active", sent: 142, rate: "97%", icon: "📱" },
-  { name: "Rappel no-show", type: "Récupération", triggers: "15 min après no-show", status: "active", sent: 23, rate: "35%", icon: "🔄" },
-  { name: "Suivi post-traitement", type: "Post-visite", triggers: "48h après visite", status: "active", sent: 89, rate: "68%", icon: "💊" },
-  { name: "Nurturing Invisalign", type: "Séquence vente", triggers: "Jour 1, 3, 7, 14", status: "active", sent: 67, rate: "22%", icon: "✨" },
-  { name: "Réactivation patients inactifs", type: "Win-back", triggers: "6 mois sans visite", status: "active", sent: 215, rate: "18%", icon: "📧" },
-  { name: "Collecte avis Google", type: "Réputation", triggers: "7 jours après visite", status: "active", sent: 104, rate: "41%", icon: "⭐" },
-];
-
-const chatMessages = [
-  { role: "patient", text: "Bonjour, est-ce que vous avez des disponibilités cette semaine pour un nettoyage?", time: "10:28" },
-  { role: "ai", text: "Bonjour! 😊 Absolument. Nous avons des places disponibles mercredi à 10h ou 14h, et jeudi à 9h ou 15h30. Quelle plage vous conviendrait le mieux?", time: "10:28" },
-  { role: "patient", text: "Jeudi 9h ça serait parfait!", time: "10:29" },
-  { role: "ai", text: "Excellent! Je vous réserve le jeudi 20 février à 9h avec Dre Tremblay. Est-ce votre première visite chez nous?", time: "10:29" },
-  { role: "patient", text: "Oui c'est ma première fois.", time: "10:29" },
-  { role: "ai", text: "Bienvenue! 🎉 Pour accélérer votre enregistrement, je vous envoie par email un formulaire pré-visite à remplir. Puis-je avoir votre nom complet et votre courriel?", time: "10:30" },
-  { role: "patient", text: "Émilie Fortin, emilie.fortin@gmail.com", time: "10:30" },
-  { role: "ai", text: "Merci Émilie! Votre RDV est confirmé ✅\n\n📅 Jeudi 20 fév. à 9h00\n👩‍⚕️ Dre Tremblay\n📍 1250 rue Sherbrooke, Montréal\n\nVous recevrez un SMS de rappel 24h avant. À bientôt!", time: "10:30" },
+  { name: { fr: "Confirmation RDV (SMS + Email)", en: "Appt Confirmation (SMS + Email)" }, type: { fr: "Pré-visite", en: "Pre-visit" }, triggers: { fr: "24h avant", en: "24h before" }, status: "active", sent: 142, rate: "97%", icon: "📱" },
+  { name: { fr: "Rappel no-show", en: "No-show reminder" }, type: { fr: "Récupération", en: "Recovery" }, triggers: { fr: "15 min après no-show", en: "15 min after no-show" }, status: "active", sent: 23, rate: "35%", icon: "🔄" },
+  { name: { fr: "Suivi post-traitement", en: "Post-treatment follow-up" }, type: { fr: "Post-visite", en: "Post-visit" }, triggers: { fr: "48h après visite", en: "48h after visit" }, status: "active", sent: 89, rate: "68%", icon: "💊" },
+  { name: { fr: "Nurturing Invisalign", en: "Invisalign nurturing" }, type: { fr: "Séquence vente", en: "Sales sequence" }, triggers: { fr: "Jour 1, 3, 7, 14", en: "Day 1, 3, 7, 14" }, status: "active", sent: 67, rate: "22%", icon: "✨" },
+  { name: { fr: "Réactivation patients inactifs", en: "Inactive patient reactivation" }, type: "Win-back", triggers: { fr: "6 mois sans visite", en: "6 months no visit" }, status: "active", sent: 215, rate: "18%", icon: "📧" },
+  { name: { fr: "Collecte avis Google", en: "Google review collection" }, type: { fr: "Réputation", en: "Reputation" }, triggers: { fr: "7 jours après visite", en: "7 days after visit" }, status: "active", sent: 104, rate: "41%", icon: "⭐" },
 ];
 
 function AnimatedNumber({ value, prefix = "", suffix = "", color }) {
@@ -68,26 +235,45 @@ function AnimatedNumber({ value, prefix = "", suffix = "", color }) {
 }
 
 export default function App() {
+  const [lang, setLang] = useState(detectLang);
   const [tab, setTab] = useState("pipeline");
   const [chatVisible, setChatVisible] = useState(0);
   const chatRef = useRef(null);
+  const mobile = useIsMobile();
+  const t = T[lang];
+
+  const toggleLang = useCallback(() => {
+    setLang((l) => (l === "fr" ? "en" : "fr"));
+    setChatVisible(0);
+  }, []);
+
+  const g = (v) => (typeof v === "object" ? v[lang] : v);
 
   useEffect(() => {
-    if (tab === "chatbot" && chatVisible < chatMessages.length) {
-      const t = setTimeout(() => setChatVisible(v => v + 1), 700);
-      return () => clearTimeout(t);
+    if (tab === "chatbot" && chatVisible < t.chatMessages.length) {
+      const timer = setTimeout(() => setChatVisible((v) => v + 1), 700);
+      return () => clearTimeout(timer);
     }
-  }, [tab, chatVisible]);
+  }, [tab, chatVisible, t.chatMessages.length]);
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [chatVisible]);
 
   const tabs = [
-    { key: "pipeline", label: "Pipeline patients", icon: "👥" },
-    { key: "automations", label: "Automatisations", icon: "⚡" },
-    { key: "chatbot", label: "Chatbot en action", icon: "💬" },
+    { key: "pipeline", label: t.tabPipeline, icon: "👥" },
+    { key: "automations", label: t.tabAutomations, icon: "⚡" },
+    { key: "chatbot", label: mobile ? "💬" : t.tabChatbot, icon: mobile ? "" : "💬" },
   ];
+
+  const statusLabel = (status) => {
+    const map = {
+      booked: { label: t.booked, color: C.accent },
+      nurturing: { label: t.nurturing, color: C.orange },
+      lost: { label: t.lost, color: C.red },
+    };
+    return map[status] || map.booked;
+  };
 
   return (
     <div style={{
@@ -103,81 +289,106 @@ export default function App() {
 
       {/* Header */}
       <header style={{
-        padding: "14px 28px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: mobile ? "12px 14px" : "14px 28px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
         borderBottom: `1px solid ${C.border}`, background: "rgba(3,7,18,0.9)", backdropFilter: "blur(16px)",
-        position: "sticky", top: 0, zIndex: 50,
+        position: "sticky", top: 0, zIndex: 50, gap: 8,
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: mobile ? 10 : 14, minWidth: 0 }}>
           <div style={{
-            width: 40, height: 40, borderRadius: 12,
+            width: mobile ? 34 : 40, height: mobile ? 34 : 40, borderRadius: 12, flexShrink: 0,
             background: `linear-gradient(135deg, ${C.accent}, ${C.blue})`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 20, animation: "glow 3s infinite",
+            fontSize: mobile ? 17 : 20, animation: "glow 3s infinite",
           }}>🦷</div>
-          <div>
-            <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: -0.5 }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: mobile ? 15 : 17, fontWeight: 800, letterSpacing: -0.5 }}>
               Denti<span style={{ color: C.accent }}>Flow</span> AI
             </div>
-            <div style={{ fontSize: 11, color: C.dim }}>Clinique Dentaire Sainte-Catherine — Automatisation complète</div>
+            {!mobile && (
+              <div style={{ fontSize: 11, color: C.dim }}>{t.subtitle}</div>
+            )}
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "5px 14px", borderRadius: 20,
-            background: `${C.accent}12`, border: `1px solid ${C.accent}35`,
-            fontSize: 12, fontWeight: 600, color: C.accent,
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <button onClick={toggleLang} style={{
+            padding: "5px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+            background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accent}40`,
+            cursor: "pointer",
           }}>
-            <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.accent, animation: "pulse2 2s infinite" }} />
-            6 automatisations actives
-          </div>
-          <div style={{ padding: "5px 14px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: C.card, color: C.muted, border: `1px solid ${C.border}` }}>
-            PrimeDev Studios
-          </div>
+            {lang === "fr" ? "EN" : "FR"}
+          </button>
+          {!mobile && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "5px 14px", borderRadius: 20,
+              background: `${C.accent}12`, border: `1px solid ${C.accent}35`,
+              fontSize: 12, fontWeight: 600, color: C.accent,
+            }}>
+              <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.accent, animation: "pulse2 2s infinite" }} />
+              {t.automationsActive}
+            </div>
+          )}
+          {!mobile && (
+            <div style={{ padding: "5px 14px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: C.card, color: C.muted, border: `1px solid ${C.border}` }}>
+              PrimeDev Studios
+            </div>
+          )}
         </div>
       </header>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, padding: "10px 28px", borderBottom: `1px solid ${C.border}`, background: "rgba(3,7,18,0.5)" }}>
-        {tabs.map(t => (
-          <button key={t.key} onClick={() => { setTab(t.key); if (t.key === "chatbot") setChatVisible(0); }}
+      <div style={{
+        display: "flex", gap: 4, padding: mobile ? "10px 12px" : "10px 28px",
+        borderBottom: `1px solid ${C.border}`, background: "rgba(3,7,18,0.5)",
+        overflowX: "auto",
+      }}>
+        {tabs.map((tb) => (
+          <button key={tb.key} onClick={() => { setTab(tb.key); if (tb.key === "chatbot") setChatVisible(0); }}
             style={{
-              padding: "8px 20px", borderRadius: 10, border: "none", cursor: "pointer",
-              fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
-              background: tab === t.key ? `linear-gradient(135deg, ${C.accent}, ${C.blue})` : "transparent",
-              color: tab === t.key ? C.bg : C.muted, transition: "all 0.25s",
+              padding: mobile ? "7px 14px" : "8px 20px", borderRadius: 10, border: "none", cursor: "pointer",
+              fontSize: mobile ? 12 : 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
+              background: tab === tb.key ? `linear-gradient(135deg, ${C.accent}, ${C.blue})` : "transparent",
+              color: tab === tb.key ? C.bg : C.muted, transition: "all 0.25s",
+              whiteSpace: "nowrap", flexShrink: 0,
             }}>
-            {t.icon} {t.label}
+            {tb.icon && <span>{tb.icon}</span>} {tb.label}
           </button>
         ))}
       </div>
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: 28 }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: mobile ? 14 : 28 }}>
 
         {/* KPI BAR - always visible */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14, marginBottom: 24 }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: mobile ? "1fr 1fr" : "repeat(5, 1fr)",
+          gap: mobile ? 10 : 14,
+          marginBottom: mobile ? 14 : 24,
+        }}>
           {[
-            { label: "PATIENTS CE MOIS", val: 156, suffix: "", color: C.accent, icon: "👥", sub: "+23% vs jan." },
-            { label: "RDV BOOKÉS PAR L'IA", val: 89, suffix: "", color: C.blue, icon: "📅", sub: "57% du total" },
-            { label: "REVENUS GÉNÉRÉS", val: 42, suffix: "K$", color: C.purple, icon: "💰", sub: "Via automatisations" },
-            { label: "TAUX NO-SHOW", val: 4, suffix: "%", color: C.accent, icon: "📉", sub: "Était 18% avant IA" },
-            { label: "AVIS GOOGLE", val: 4.9, suffix: "/5", color: C.orange, icon: "⭐", sub: "127 avis · +34 ce mois" },
+            { label: t.kpiPatients, val: t.kpiPatientsVal, suffix: "", color: C.accent, icon: "👥", sub: t.kpiPatientsSub },
+            { label: t.kpiBooked, val: t.kpiBookedVal, suffix: "", color: C.blue, icon: "📅", sub: t.kpiBookedSub },
+            { label: t.kpiRevenue, val: 42, suffix: "K$", color: C.purple, icon: "💰", sub: t.kpiRevenueSub },
+            { label: t.kpiNoshow, val: 4, suffix: "%", color: C.accent, icon: "📉", sub: t.kpiNoshowSub },
+            { label: t.kpiReviews, val: 4.9, suffix: "/5", color: C.orange, icon: "⭐", sub: t.kpiReviewsSub },
           ].map((k, i) => (
             <div key={i} style={{
-              background: C.card, borderRadius: 14, padding: "18px 16px",
+              background: C.card, borderRadius: mobile ? 12 : 14, padding: mobile ? "14px 12px" : "18px 16px",
               border: `1px solid ${C.border}`, position: "relative", overflow: "hidden",
+              ...(mobile && i === 4 ? { gridColumn: "1 / -1" } : {}),
             }}>
               <div style={{
                 position: "absolute", bottom: -15, right: -15, width: 60, height: 60,
                 borderRadius: "50%", background: `${k.color}08`,
               }} />
-              <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>
+              <div style={{ fontSize: mobile ? 9 : 10, color: C.dim, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>
                 {k.icon} {k.label}
               </div>
-              <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: -1, marginBottom: 4 }}>
+              <div style={{ fontSize: mobile ? 24 : 30, fontWeight: 800, letterSpacing: -1, marginBottom: 4 }}>
                 <AnimatedNumber value={k.val} suffix={k.suffix} color={k.color} />
               </div>
-              <div style={{ fontSize: 10, color: C.dim }}>{k.sub}</div>
+              <div style={{ fontSize: mobile ? 9 : 10, color: C.dim }}>{k.sub}</div>
             </div>
           ))}
         </div>
@@ -186,16 +397,20 @@ export default function App() {
         {tab === "pipeline" && (
           <div style={{ animation: "slideIn 0.3s ease" }}>
             <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-              <div style={{ padding: "18px 24px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{
+                padding: mobile ? "14px 14px" : "18px 24px", borderBottom: `1px solid ${C.border}`,
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                flexWrap: "wrap", gap: 8,
+              }}>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 700 }}>Pipeline patients — Qualifiés par IA</div>
-                  <div style={{ fontSize: 12, color: C.dim }}>Scoring automatique basé sur le besoin, l'urgence et la valeur potentielle</div>
+                  <div style={{ fontSize: mobile ? 14 : 16, fontWeight: 700 }}>{t.pipelineTitle}</div>
+                  {!mobile && <div style={{ fontSize: 12, color: C.dim }}>{t.pipelineSub}</div>}
                 </div>
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {[
-                    { label: "Bookés", count: patients.filter(p => p.status === "booked").length, color: C.accent },
-                    { label: "Nurturing", count: patients.filter(p => p.status === "nurturing").length, color: C.orange },
-                    { label: "Perdus", count: patients.filter(p => p.status === "lost").length, color: C.red },
+                    { label: t.booked, count: patients.filter((p) => p.status === "booked").length, color: C.accent },
+                    { label: t.nurturing, count: patients.filter((p) => p.status === "nurturing").length, color: C.orange },
+                    { label: t.lost, count: patients.filter((p) => p.status === "lost").length, color: C.red },
                   ].map((s, i) => (
                     <div key={i} style={{
                       padding: "4px 12px", borderRadius: 8, fontSize: 11, fontWeight: 700,
@@ -207,58 +422,108 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Table header */}
-              <div style={{
-                display: "grid", gridTemplateColumns: "1.8fr 1.2fr 0.8fr 0.7fr 0.8fr 1.2fr 0.8fr",
-                padding: "10px 24px", fontSize: 10, fontWeight: 700, color: C.dim,
-                textTransform: "uppercase", letterSpacing: 1, borderBottom: `1px solid ${C.border}`,
-              }}>
-                <span>Patient</span><span>Besoin</span><span>Valeur</span><span>Score</span><span>Source</span><span>Suivi IA</span><span>Heure</span>
-              </div>
-
-              {patients.map((p, i) => {
-                const statusColor = p.status === "booked" ? C.accent : p.status === "nurturing" ? C.orange : C.red;
-                return (
-                  <div key={p.id} style={{
-                    display: "grid", gridTemplateColumns: "1.8fr 1.2fr 0.8fr 0.7fr 0.8fr 1.2fr 0.8fr",
-                    alignItems: "center", padding: "14px 24px",
-                    borderBottom: `1px solid ${C.border}`,
-                    animation: "slideIn 0.3s ease", animationDelay: `${i * 50}ms`,
-                    animationFillMode: "backwards", cursor: "pointer",
-                    transition: "background 0.2s",
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = C.surface}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{
-                        width: 34, height: 34, borderRadius: 10,
-                        background: `${statusColor}15`, border: `1px solid ${statusColor}30`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 14, fontWeight: 700, color: statusColor,
+              {mobile ? (
+                /* Mobile: Card layout */
+                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                  {patients.map((p, i) => {
+                    const st = statusLabel(p.status);
+                    return (
+                      <div key={p.id} style={{
+                        padding: "14px 14px", borderBottom: `1px solid ${C.border}`,
+                        animation: "slideIn 0.3s ease", animationDelay: `${i * 50}ms`,
+                        animationFillMode: "backwards",
                       }}>
-                        {p.name.charAt(0)}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div style={{
+                              width: 30, height: 30, borderRadius: 8,
+                              background: `${st.color}15`, border: `1px solid ${st.color}30`,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: 13, fontWeight: 700, color: st.color,
+                            }}>
+                              {p.name.charAt(0)}
+                            </div>
+                            <div style={{ fontSize: 13, fontWeight: 600 }}>{p.name}</div>
+                          </div>
+                          <div style={{
+                            display: "inline-flex", alignItems: "center", gap: 4,
+                            padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                            background: p.score >= 85 ? `${C.accent}18` : p.score >= 65 ? `${C.orange}18` : `${C.red}18`,
+                            color: p.score >= 85 ? C.accent : p.score >= 65 ? C.orange : C.red,
+                          }}>
+                            {p.score}%
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                          <span style={{ fontSize: 12, color: C.muted }}>{g(p.need)}</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: C.accent }}>{p.value}</span>
+                          <span style={{
+                            padding: "2px 8px", borderRadius: 12, fontSize: 10, fontWeight: 600,
+                            background: `${st.color}15`, color: st.color,
+                          }}>{st.label}</span>
+                          <span style={{ fontSize: 11, color: C.dim, marginLeft: "auto" }}>{g(p.time)}</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: st.color, marginTop: 4, fontWeight: 500 }}>{g(p.follow)}</div>
                       </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{p.name}</div>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 12, color: C.muted }}>{p.need}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{p.value}</div>
-                    <div style={{
-                      display: "inline-flex", alignItems: "center", gap: 4,
-                      padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 700,
-                      background: p.score >= 85 ? `${C.accent}18` : p.score >= 65 ? `${C.orange}18` : `${C.red}18`,
-                      color: p.score >= 85 ? C.accent : p.score >= 65 ? C.orange : C.red,
-                    }}>
-                      {p.score}%
-                    </div>
-                    <div style={{ fontSize: 11, color: C.dim }}>{p.source}</div>
-                    <div style={{ fontSize: 11, color: statusColor, fontWeight: 500 }}>{p.follow}</div>
-                    <div style={{ fontSize: 11, color: C.dim }}>{p.time}</div>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* Desktop: Table layout */
+                <>
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "1.8fr 1.2fr 0.8fr 0.7fr 0.8fr 1.2fr 0.8fr",
+                    padding: "10px 24px", fontSize: 10, fontWeight: 700, color: C.dim,
+                    textTransform: "uppercase", letterSpacing: 1, borderBottom: `1px solid ${C.border}`,
+                  }}>
+                    <span>{t.colPatient}</span><span>{t.colNeed}</span><span>{t.colValue}</span><span>{t.colScore}</span><span>{t.colSource}</span><span>{t.colFollow}</span><span>{t.colTime}</span>
                   </div>
-                );
-              })}
+
+                  {patients.map((p, i) => {
+                    const statusColor = p.status === "booked" ? C.accent : p.status === "nurturing" ? C.orange : C.red;
+                    return (
+                      <div key={p.id} style={{
+                        display: "grid", gridTemplateColumns: "1.8fr 1.2fr 0.8fr 0.7fr 0.8fr 1.2fr 0.8fr",
+                        alignItems: "center", padding: "14px 24px",
+                        borderBottom: `1px solid ${C.border}`,
+                        animation: "slideIn 0.3s ease", animationDelay: `${i * 50}ms`,
+                        animationFillMode: "backwards", cursor: "pointer",
+                        transition: "background 0.2s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = C.surface)}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{
+                            width: 34, height: 34, borderRadius: 10,
+                            background: `${statusColor}15`, border: `1px solid ${statusColor}30`,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 14, fontWeight: 700, color: statusColor,
+                          }}>
+                            {p.name.charAt(0)}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600 }}>{p.name}</div>
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 12, color: C.muted }}>{g(p.need)}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{p.value}</div>
+                        <div style={{
+                          display: "inline-flex", alignItems: "center", gap: 4,
+                          padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                          background: p.score >= 85 ? `${C.accent}18` : p.score >= 65 ? `${C.orange}18` : `${C.red}18`,
+                          color: p.score >= 85 ? C.accent : p.score >= 65 ? C.orange : C.red,
+                        }}>
+                          {p.score}%
+                        </div>
+                        <div style={{ fontSize: 11, color: C.dim }}>{g(p.source)}</div>
+                        <div style={{ fontSize: 11, color: statusColor, fontWeight: 500 }}>{g(p.follow)}</div>
+                        <div style={{ fontSize: 11, color: C.dim }}>{g(p.time)}</div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -266,51 +531,51 @@ export default function App() {
         {/* AUTOMATIONS */}
         {tab === "automations" && (
           <div style={{ animation: "slideIn 0.3s ease" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 14 }}>
               {automations.map((a, i) => (
                 <div key={i} style={{
-                  background: C.card, borderRadius: 14, padding: 22,
+                  background: C.card, borderRadius: 14, padding: mobile ? 16 : 22,
                   border: `1px solid ${C.border}`,
                   animation: "slideIn 0.3s ease", animationDelay: `${i * 80}ms`,
                   animationFillMode: "backwards",
                   transition: "border-color 0.2s",
                 }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = C.accent + "50"}
-                onMouseLeave={e => e.currentTarget.style.borderColor = C.border}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = C.accent + "50")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = C.border)}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
                       <div style={{
-                        width: 40, height: 40, borderRadius: 10,
+                        width: mobile ? 36 : 40, height: mobile ? 36 : 40, borderRadius: 10, flexShrink: 0,
                         background: `${C.accent}12`, border: `1px solid ${C.accent}25`,
-                        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
+                        display: "flex", alignItems: "center", justifyContent: "center", fontSize: mobile ? 16 : 18,
                       }}>{a.icon}</div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 700 }}>{a.name}</div>
-                        <div style={{ fontSize: 11, color: C.dim }}>{a.type} · Déclencheur: {a.triggers}</div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: mobile ? 13 : 14, fontWeight: 700 }}>{g(a.name)}</div>
+                        <div style={{ fontSize: 11, color: C.dim }}>{g(a.type)} · {t.trigger}: {g(a.triggers)}</div>
                       </div>
                     </div>
                     <div style={{
-                      padding: "3px 10px", borderRadius: 20, fontSize: 10, fontWeight: 700,
+                      padding: "3px 10px", borderRadius: 20, fontSize: 10, fontWeight: 700, flexShrink: 0,
                       background: `${C.accent}15`, color: C.accent, border: `1px solid ${C.accent}30`,
                       textTransform: "uppercase", letterSpacing: 0.5,
-                    }}>Actif</div>
+                    }}>{t.active}</div>
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                     <div style={{ background: C.surface, borderRadius: 10, padding: 12 }}>
                       <div style={{ fontSize: 10, color: C.dim, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-                        Messages envoyés
+                        {t.msgSent}
                       </div>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: C.blue, fontFamily: "'Space Mono', monospace" }}>
+                      <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, color: C.blue, fontFamily: "'Space Mono', monospace" }}>
                         {a.sent}
                       </div>
                     </div>
                     <div style={{ background: C.surface, borderRadius: 10, padding: 12 }}>
                       <div style={{ fontSize: 10, color: C.dim, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-                        Taux de réponse
+                        {t.responseRate}
                       </div>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: C.accent, fontFamily: "'Space Mono', monospace" }}>
+                      <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, color: C.accent, fontFamily: "'Space Mono', monospace" }}>
                         {a.rate}
                       </div>
                     </div>
@@ -331,38 +596,24 @@ export default function App() {
 
             {/* ROI Summary */}
             <div style={{
-              marginTop: 20, background: C.card, borderRadius: 14, padding: 24,
+              marginTop: 20, background: C.card, borderRadius: 14, padding: mobile ? 16 : 24,
               border: `1px solid ${C.accent}30`,
-              display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16,
+              display: "grid", gridTemplateColumns: mobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 16,
             }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
-                  Temps économisé / mois
+              {[
+                { label: t.roiTimeSaved, val: "47h", color: C.accent, sub: t.roiTimeSub },
+                { label: t.roiNoshow, val: "23", color: C.blue, sub: t.roiNoshowSub },
+                { label: t.roiReactivated, val: "38", color: C.purple, sub: t.roiReactivatedSub },
+                { label: t.roiMonthly, val: "14x", color: C.orange, sub: t.roiMonthlySub },
+              ].map((r, i) => (
+                <div key={i} style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: mobile ? 9 : 10, color: C.dim, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
+                    {r.label}
+                  </div>
+                  <div style={{ fontSize: mobile ? 22 : 28, fontWeight: 800, color: r.color, fontFamily: "'Space Mono', monospace" }}>{r.val}</div>
+                  <div style={{ fontSize: mobile ? 10 : 11, color: C.dim }}>{r.sub}</div>
                 </div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: C.accent, fontFamily: "'Space Mono', monospace" }}>47h</div>
-                <div style={{ fontSize: 11, color: C.dim }}>Réceptionniste + suivi</div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
-                  No-shows évités
-                </div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: C.blue, fontFamily: "'Space Mono', monospace" }}>23</div>
-                <div style={{ fontSize: 11, color: C.dim }}>Valeur: ~6,900$</div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
-                  Patients réactivés
-                </div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: C.purple, fontFamily: "'Space Mono', monospace" }}>38</div>
-                <div style={{ fontSize: 11, color: C.dim }}>Inactifs 6+ mois</div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
-                  ROI mensuel
-                </div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: C.orange, fontFamily: "'Space Mono', monospace" }}>14x</div>
-                <div style={{ fontSize: 11, color: C.dim }}>Retour sur investissement</div>
-              </div>
+              ))}
             </div>
           </div>
         )}
@@ -370,41 +621,38 @@ export default function App() {
         {/* CHATBOT */}
         {tab === "chatbot" && (
           <div style={{ animation: "slideIn 0.3s ease" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 340px", gap: 16 }}>
               {/* Chat Window */}
               <div style={{
                 background: C.card, borderRadius: 16, border: `1px solid ${C.border}`,
-                display: "flex", flexDirection: "column", height: 520,
+                display: "flex", flexDirection: "column", height: mobile ? 400 : 520,
               }}>
                 {/* Chat header */}
                 <div style={{
-                  padding: "14px 20px", borderBottom: `1px solid ${C.border}`,
+                  padding: mobile ? "12px 14px" : "14px 20px", borderBottom: `1px solid ${C.border}`,
                   display: "flex", alignItems: "center", gap: 12,
                 }}>
                   <div style={{
-                    width: 38, height: 38, borderRadius: 12,
+                    width: mobile ? 32 : 38, height: mobile ? 32 : 38, borderRadius: 12, flexShrink: 0,
                     background: `linear-gradient(135deg, ${C.accent}, ${C.blue})`,
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: mobile ? 15 : 18,
                   }}>🦷</div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>
-                      Chatbot IA — Clinique Ste-Catherine
-                    </div>
-                    <div style={{ fontSize: 11, color: C.accent }}>● En ligne · Répond en ~2 secondes</div>
+                    <div style={{ fontSize: mobile ? 13 : 14, fontWeight: 700 }}>{t.chatTitle}</div>
+                    <div style={{ fontSize: 11, color: C.accent }}>{t.chatOnline}</div>
                   </div>
                 </div>
 
                 {/* Messages */}
-                <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 10 }}>
-                  {/* Intro */}
+                <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: mobile ? 14 : 20, display: "flex", flexDirection: "column", gap: 10 }}>
                   <div style={{
                     textAlign: "center", padding: 12, margin: "0 auto 8px",
                     borderRadius: 12, background: C.surface, fontSize: 11, color: C.dim, maxWidth: 300,
                   }}>
-                    Widget chatbot intégré sur le site web de la clinique
+                    {t.chatIntro}
                   </div>
 
-                  {chatMessages.slice(0, chatVisible).map((msg, i) => (
+                  {t.chatMessages.slice(0, chatVisible).map((msg, i) => (
                     <div key={i} style={{
                       display: "flex", justifyContent: msg.role === "ai" ? "flex-start" : "flex-end",
                       animation: "slideIn 0.3s ease",
@@ -417,7 +665,7 @@ export default function App() {
                         }}>🦷</div>
                       )}
                       <div style={{
-                        maxWidth: "75%", padding: "10px 16px", borderRadius: 16,
+                        maxWidth: mobile ? "85%" : "75%", padding: "10px 16px", borderRadius: 16,
                         background: msg.role === "ai"
                           ? `linear-gradient(135deg, ${C.surface}, #0d1a2e)`
                           : `linear-gradient(135deg, ${C.accent}, ${C.blue})`,
@@ -437,7 +685,7 @@ export default function App() {
                       </div>
                     </div>
                   ))}
-                  {chatVisible < chatMessages.length && (
+                  {chatVisible < t.chatMessages.length && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{
                         width: 28, height: 28, borderRadius: 8,
@@ -458,39 +706,26 @@ export default function App() {
               </div>
 
               {/* Side Panel */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", flexDirection: mobile ? "row" : "column", gap: 12, overflowX: mobile ? "auto" : "visible" }}>
                 <div style={{
-                  background: C.card, borderRadius: 16, padding: 20,
-                  border: `1px solid ${C.border}`,
+                  background: C.card, borderRadius: 16, padding: mobile ? 16 : 20,
+                  border: `1px solid ${C.border}`, minWidth: mobile ? 280 : "auto", flex: mobile ? "0 0 auto" : "unset",
                 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>📋 Fiche patient auto-créée</div>
-                  {[
-                    ["Nom", "Émilie Fortin"],
-                    ["Email", "emilie.fortin@gmail.com"],
-                    ["Type", "Nouvelle patiente"],
-                    ["Besoin", "Examen + nettoyage"],
-                    ["RDV", "Jeudi 20 fév. 9h00"],
-                    ["Dentiste", "Dre Tremblay"],
-                    ["Formulaire", "Pré-visite envoyé ✅"],
-                  ].map(([k, v], i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < 6 ? `1px solid ${C.border}` : "none" }}>
-                      <span style={{ fontSize: 11, color: C.dim }}>{k}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: C.white }}>{v}</span>
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>{t.ficheTitle}</div>
+                  {t.ficheFields.map(([k, v], i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < 6 ? `1px solid ${C.border}` : "none", gap: 12 }}>
+                      <span style={{ fontSize: 11, color: C.dim, whiteSpace: "nowrap" }}>{k}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: C.white, textAlign: "right" }}>{v}</span>
                     </div>
                   ))}
                 </div>
 
                 <div style={{
-                  background: C.card, borderRadius: 16, padding: 20,
-                  border: `1px solid ${C.border}`,
+                  background: C.card, borderRadius: 16, padding: mobile ? 16 : 20,
+                  border: `1px solid ${C.border}`, minWidth: mobile ? 240 : "auto", flex: mobile ? "0 0 auto" : "unset",
                 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>⚡ Actions automatiques</div>
-                  {[
-                    { icon: "✅", text: "RDV créé", sub: "Système de gestion clinique" },
-                    { icon: "📧", text: "Formulaire pré-visite envoyé", sub: "Email automatique" },
-                    { icon: "📱", text: "SMS rappel programmé", sub: "24h avant le RDV" },
-                    { icon: "📊", text: "Fiche patient créée", sub: "CRM mis à jour" },
-                  ].map((a, i) => (
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>{t.actionsTitle}</div>
+                  {t.actions.map((a, i) => (
                     <div key={i} style={{
                       display: "flex", alignItems: "center", gap: 8, padding: "8px 0",
                       borderBottom: i < 3 ? `1px solid ${C.border}` : "none",
@@ -512,26 +747,25 @@ export default function App() {
 
         {/* Footer */}
         <div style={{
-          marginTop: 32, padding: "20px 24px", borderRadius: 16,
+          marginTop: mobile ? 20 : 32, padding: mobile ? "16px 14px" : "20px 24px", borderRadius: 16,
           background: `linear-gradient(135deg, ${C.accent}10, ${C.blue}15)`,
           border: `1px solid ${C.accent}25`,
           display: "flex", justifyContent: "space-between", alignItems: "center",
+          flexDirection: mobile ? "column" : "row", gap: mobile ? 12 : 0,
         }}>
-          <div>
+          <div style={{ textAlign: mobile ? "center" : "left" }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>
-              Développé par <span style={{ color: C.accent }}>PrimeDev Studios</span>
+              {t.footerBy} <span style={{ color: C.accent }}>PrimeDev Studios</span>
             </div>
-            <div style={{ fontSize: 12, color: C.dim }}>
-              Automatisation IA sur mesure · n8n · OpenAI · Twilio · CRM Integration
-            </div>
+            <div style={{ fontSize: 12, color: C.dim }}>{t.footerTech}</div>
           </div>
           <a href="https://primedev-studios.netlify.app/#contact" target="_blank" rel="noopener noreferrer" style={{
             padding: "10px 24px", borderRadius: 10,
             background: `linear-gradient(135deg, ${C.accent}, ${C.blue})`,
             fontSize: 13, fontWeight: 700, color: C.bg, cursor: "pointer",
-            textDecoration: "none",
+            textDecoration: "none", whiteSpace: "nowrap",
           }}>
-            Demander une démo →
+            {t.footerCta}
           </a>
         </div>
       </div>
